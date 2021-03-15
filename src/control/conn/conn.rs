@@ -2,66 +2,86 @@ use std::io;
 use std::num::ParseIntError;
 use std::str::{FromStr, Utf8Error};
 use std::string::FromUtf8Error;
+use thiserror::Error;
 
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 /// UnauthenticatedConnError describes subset of `ConnError`s returned by `UnauthenticatedConn`
-#[derive(Debug, From)]
+#[derive(Error, Debug)]
 pub enum UnauthenticatedConnError {
     /// Fetching authentication info twice causes tor to break connections so we forbid that and return
     /// this error code when programmer tries to do so.
+    #[error("double info fetch (probably programmer error)")]
     InfoFetchedTwice,
 
     /// ServerHashMismatch is returned when SafeCookie auth methods client detects that
     /// it connects to wrong server.
     ///
     /// Right now it's not implemented and is never returned.
+    #[error("cookie server hash mismatch (wrong server?)")]
     ServerHashMismatch,
 }
 
 
 /// AuthenticatedConnError describes subset of `ConnError`s returned by `AuthenticatedConn`
-#[derive(Debug, From)]
+#[derive(Error, Debug)]
 pub enum AuthenticatedConnError {
     /// InvalidKeywordValue when user-provided keyword is not valid
     /// It's also returned when user-provided option is not valid.
+    #[error("user-provided keyword/option not valid")]
     InvalidKeywordValue,
 
     /// InvalidHostnameValue when user-provided domain passed to resolve is not valid
+    #[error("user-provided hostname is not valid")]
     InvalidHostnameValue,
 
     /// InvalidListenerSpecification is returned when one tries to spin up new onion service and
     /// port settings are invalid
+    #[error("onion service listener port settings are invalid")]
     InvalidListenerSpecification,
 
     /// InvalidOnionServiceIdentifier is returned when onion service identifier passed as argument is invalid
+    #[error("onion service id is invalid")]
     InvalidOnionServiceIdentifier,
 
     /// InvalidEventName is returned when name of given event passed to conn is invalid and may corrupt connection flow
+    #[error("event name is invalid")]
     InvalidEventName,
 }
 
 /// ConnError is able to wrap any error that a connection may return
-#[derive(Debug, From)]
+#[derive(Error, Debug)]
 pub enum ConnError {
-    IOError(io::Error),
-    Utf8Error(Utf8Error),
-    FromUtf8Error(FromUtf8Error),
-    ParseIntError(ParseIntError),
+    #[error("io error")]
+    IOError(#[from] io::Error),
+    #[error("utf-8 error")]
+    Utf8Error(#[from] Utf8Error),
+    #[error("error converting from utf8")]
+    FromUtf8Error(#[from] FromUtf8Error),
+    #[error("couldn't parse integer")]
+    ParseIntError(#[from] ParseIntError),
 
-    UnauthenticatedConnError(UnauthenticatedConnError),
-    AuthenticatedConnError(AuthenticatedConnError),
+    #[error("unauthenticated connection: {0}")]
+    UnauthenticatedConnError(#[from] UnauthenticatedConnError),
+    #[error("authenticated connection: {0}")]
+    AuthenticatedConnError(#[from] AuthenticatedConnError),
 
     // TODO(teawithsand): migrate this error to more meaningful one - with explanation or unknown code otherwise
     /// Invalid(or unexpected) response code was returned from tor controller.
     /// Usually this indicates some error on tor's side
+    #[error("invalid response code {0}")]
     InvalidResponseCode(u16),
 
+    #[error("invalid format")]
     InvalidFormat,
+    #[error("invalid character")]
     InvalidCharacterFound,
+    #[error("non-ascii byte encountered")]
     NonAsciiByteFound,
+    #[error("response code did not match")]
     ResponseCodeMismatch,
 
+    #[error("read too many bytes")]
     TooManyBytesRead,
 }
 
