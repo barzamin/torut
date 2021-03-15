@@ -3,7 +3,7 @@ use std::num::ParseIntError;
 use std::str::{FromStr, Utf8Error};
 use std::string::FromUtf8Error;
 
-use tokio::prelude::*;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 /// UnauthenticatedConnError describes subset of `ConnError`s returned by `UnauthenticatedConn`
 #[derive(Debug, From)]

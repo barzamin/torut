@@ -5,8 +5,7 @@ use std::str::FromStr;
 use hmac::{Hmac, Mac};
 use rand::{RngCore, thread_rng};
 use sha2::Sha256;
-use tokio::io::AsyncRead;
-use tokio::prelude::AsyncWrite;
+use tokio::io::{AsyncRead, AsyncWrite};
 
 use crate::control::conn::{AuthenticatedConn, Conn, ConnError, UnauthenticatedConnError};
 use crate::control::primitives::{TorAuthData, TorAuthMethod, TorPreAuthInfo};
@@ -419,7 +418,7 @@ mod test_tor {
 
     use tokio::fs::File;
     use tokio::net::TcpStream;
-    use tokio::prelude::*;
+    use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
     use crate::control::COOKIE_LENGTH;
     use crate::utils::{AutoKillChild, block_on_with_env, run_testing_tor_instance, TOR_TESTING_PORT};
